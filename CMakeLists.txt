@@ -51,13 +51,16 @@ endif()
 ## --- Find Paho C or build it, if reqested ---
 
 if(PAHO_WITH_SSL)
+  message(STATUS "Including SSL for MQTT")
   find_package(OpenSSL REQUIRED)
   set(PAHO_MQTT_C_LIB paho-mqtt3as)
 else()
   set(PAHO_MQTT_C_LIB paho-mqtt3a)
 endif()
 
+message(STATUS "Static Build: ${PAHO_BUILD_STATIC} \t Shared Build: ${PAHO_BUILD_SHARED}")
 if(PAHO_BUILD_STATIC AND NOT PAHO_BUILD_SHARED)
+  message(STATUS "Building static lib")
   set(PAHO_MQTT_C_LIB ${PAHO_MQTT_C_LIB}-static)
 endif()
 
@@ -67,30 +70,38 @@ if(PAHO_WITH_MQTT_C)
   ## Build the Paho C library from the submodule
   set(PAHO_ENABLE_TESTING FALSE CACHE BOOL "No Paho C tests")
   set(PAHO_HIGH_PERFORMANCE TRUE CACHE BOOL "Paho C high performance")
-
-  add_subdirectory(${PROJECT_SOURCE_DIR}/src/externals/paho-mqtt-c EXCLUDE_FROM_ALL)
+  
+  set(PAHO_MQTT_C_DIR ${PROJECT_SOURCE_DIR}/src/externals/paho-mqtt-c)
+  message(STATUS "Adding C source: ${PAHO_MQTT_C_DIR}")
+  add_subdirectory(${PAHO_MQTT_C_DIR})
 
   ## Alias namespace so that the full names can be used with the subdir.
   if(PAHO_BUILD_SHARED)
+    message(STATUS "Adding C SHARED ALIAS")
     add_library(eclipse-paho-mqtt-c::paho-mqtt3a ALIAS paho-mqtt3a)
     if(PAHO_WITH_SSL)
+      message(STATUS "Adding C SHARED ALIAS with SSL")
       add_library(eclipse-paho-mqtt-c::paho-mqtt3as ALIAS paho-mqtt3as)
     endif()
   else()
     # Seems that the C lib
+    message(STATUS "Adding C STATIC ALIAS")
     add_library(eclipse-paho-mqtt-c::paho-mqtt3a-static ALIAS paho-mqtt3a-static)
     if(PAHO_WITH_SSL)
+      message(STATUS "Adding C STATIC ALIAS with SSL")
       add_library(eclipse-paho-mqtt-c::paho-mqtt3as-static ALIAS paho-mqtt3as-static)
     endif()
   endif()
 
   ## install paho.mqtt.c library (appending to PahoMqttCpp export)
+  message(STATUS "Installing C lib: ${PAHO_MQTT_C_LIB}")
   install(TARGETS ${PAHO_MQTT_C_LIB}
     EXPORT PahoMqttCpp
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 else()
+  message(STATUS "Finding C LIB")
   find_package(eclipse-paho-mqtt-c REQUIRED)
 endif()
 
